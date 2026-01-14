@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"context"
+	"fmt"
+
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 )
 
@@ -15,8 +18,20 @@ func New(repo PostRepository) *Controller{
 
 }
 
+
+
+//GetPosts retrieves a list of  posts
+func (c *Controller)GetPosts(ctx context.Context) error{
+	 err:=  c.repo.GetPosts(ctx)
+
+	 if err != nil{
+		return fmt.Errorf("Controller failed to retrieve posts %w",err)
+	 }
+return nil
+}
+
 //Create creates and saves a new post 
-func(c *Controller)Create(post *entity.Post)error{
- return c.repo.Save(post)
+func(c *Controller)Create(ctx context.Context,post *entity.Post)error{
+ return c.repo.Save(ctx,post)
 }
 

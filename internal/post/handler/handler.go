@@ -1,6 +1,8 @@
 package post
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
@@ -10,7 +12,8 @@ import (
 
 //PostController defines the business logic methods for posts
 type PostController interface{
-	Create(post *entity.Post)error
+	GetPosts(ctx context.Context) error
+	Create(ctx context.Context,post *entity.Post)error
 }
 
 //Ensure ctrl.Controller implements the PostController interface.
@@ -28,9 +31,23 @@ func New(ctrl PostController)*HTTPHandler{
 }
 //RegisterRoutes register post routes
 func (h *HTTPHandler)RegisterRoutes(r *mux.Router){
+	r.HandleFunc("/post",h.GetPosts).Methods(http.MethodGet)
 	 r.HandleFunc("/post",h.Create).Methods(http.MethodPost)
 
 }
+
+//GetPosts retrieves a list of  posts
+func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
+	ctx:= r.Context()
+
+	err:=  h.ctrl.GetPosts(ctx)
+fmt.Println(err)
+	// if err != nil{
+	//  return fmt.Errorf("Handler failed to retrieve posts %w",err)
+	// }
+// return nil
+}
+
 //Create handles http request for creating posts
 func (h *HTTPHandler)Create(w http.ResponseWriter, r *http.Request){
    w.Write([]byte("ok"))

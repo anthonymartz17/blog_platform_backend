@@ -1,24 +1,53 @@
 package firebase
 
 import (
+	"context"
+	"fmt"
+
+	"cloud.google.com/go/firestore"
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
+	"google.golang.org/api/iterator"
 )
 
 //PostFirebase implements Repository using Firebase as database store
 type PostFirebase struct{
-// db dependecy
+client *firestore.Client
 }
 
 	//Ensures PostFirebase implements Repository interface
 	var _ controller.PostRepository = (*PostFirebase)(nil)
 
 //New creats a new PostFirebase
-func New(/*expected dependency*/) *PostFirebase{
-	return &PostFirebase{}
+func NewRepo(c *firestore.Client) *PostFirebase{
+	return &PostFirebase{
+		client: c,
+	}
 }
+
+
+
+
 //Save stores a new post to firebase
-func (r *PostFirebase)Save(post *entity.Post) error{
+func (r *PostFirebase)GetPosts(ctx context.Context) error{
+	iter := r.client.Collection("posts").Documents(ctx)
+for {
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		break
+	}
+	if err != nil {
+		return fmt.Errorf("Repository error: Failed to iterate: %w", err)
+	}
+	fmt.Println(doc.Data())
+
+}
+return nil
+}
+
+
+//Save stores a new post to firebase
+func (r *PostFirebase)Save(ctx context.Context,post *entity.Post) error{
 	return nil
 }
 

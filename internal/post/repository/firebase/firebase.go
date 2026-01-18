@@ -26,10 +26,11 @@ func NewRepo(c *firestore.Client) *PostFirebase{
 }
 
 
-//Save stores a new post to firebase 
+//GetPosts retrieves all posts from the "posts" collection in firestore
 func (r *PostFirebase)GetPosts(ctx context.Context)([]entity.Post,error){
 	iter := r.client.Collection("posts").Documents(ctx)
 	defer iter.Stop()
+
 	var posts []entity.Post
 
 for {
@@ -39,14 +40,14 @@ for {
 	}
 
 	if err != nil {
-		return nil,fmt.Errorf("Repository error: Failed to iterate: %w", err)
+		return nil,fmt.Errorf("failed to fetch next Firestore document: %w", err)
 	}
 
 
 	var post entity.Post
 	
 	if err := doc.DataTo(&post); err != nil {
-		return  nil,fmt.Errorf("Error unmarshaling document data: %v", err)
+		return  nil,fmt.Errorf("failed to unmarshal post data (doc ID: %s): %w", doc.Ref.ID, err)
 		} 
 		
 		post.ID = doc.Ref.ID

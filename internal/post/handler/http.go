@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//go:generate mockgen -source=http.go -destination=mocks/mock_postcontroller.go -package=mocks
+
 //PostController defines the business logic methods for posts
 type PostController interface{
 	GetPosts(ctx context.Context) ([]entity.Post,error)

@@ -21,13 +21,14 @@ func New(repo PostRepository) *Controller{
 
 
 //GetPosts retrieves a list of  posts
-func (c *Controller)GetPosts(ctx context.Context) error{
-	 err:=  c.repo.GetPosts(ctx)
+func (c *Controller)GetPosts(ctx context.Context) ([]entity.Post,error){
+	 posts,err:=  c.repo.GetPosts(ctx)
 
 	 if err != nil{
-		return fmt.Errorf("Controller failed to retrieve posts %w",err)
+		return nil,fmt.Errorf("Controller failed to retrieve posts %w",err)
 	 }
-return nil
+	 
+return posts,nil
 }
 
 //Create creates and saves a new post 

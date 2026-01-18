@@ -7,7 +7,7 @@ import (
 )
 
 type PostRepository interface{
-	GetPosts(ctx context.Context) error
+	GetPosts(ctx context.Context) ([]entity.Post,error)
   Save(ctx context.Context,post *entity.Post) error
 }
 

@@ -6,11 +6,11 @@ import (
 )
 
 type Post struct{
-	ID string `json:"id"`
-	UserId string `json:"user_id"`
-	Content string `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID string `json:"id" firestore:"id"`
+	UserId string `json:"user_id" firestore:"user_id"`
+	Content string `json:"content" firestore:"content"`
+	CreatedAt time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" firestore:"updated_at"`
 }
 
 func New(userId ,content string) *Post{

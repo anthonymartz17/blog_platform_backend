@@ -26,23 +26,33 @@ func NewRepo(c *firestore.Client) *PostFirebase{
 }
 
 
-
-
-//Save stores a new post to firebase
-func (r *PostFirebase)GetPosts(ctx context.Context) error{
+//Save stores a new post to firebase 
+func (r *PostFirebase)GetPosts(ctx context.Context)([]entity.Post,error){
 	iter := r.client.Collection("posts").Documents(ctx)
+	defer iter.Stop()
+	var posts []entity.Post
+
 for {
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		break
 	}
-	if err != nil {
-		return fmt.Errorf("Repository error: Failed to iterate: %w", err)
-	}
-	fmt.Println(doc.Data())
 
+	if err != nil {
+		return nil,fmt.Errorf("Repository error: Failed to iterate: %w", err)
+	}
+
+
+	var post entity.Post
+	
+	if err := doc.DataTo(&post); err != nil {
+		return  nil,fmt.Errorf("Error unmarshaling document data: %v", err)
+		} 
+		
+		post.ID = doc.Ref.ID
+		posts = append(posts, post)
 }
-return nil
+return posts,nil
 }
 
 

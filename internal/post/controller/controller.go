@@ -7,7 +7,7 @@ import (
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 )
 
-//Controller uses a Repository to implement  business logic operations for posts
+//Controller uses PostRepository to implement  business logic operations for posts
 type Controller struct{
 	repo PostRepository
 }
@@ -20,14 +20,13 @@ func New(repo PostRepository) *Controller{
 
 
 
-//GetPosts retrieves a list of  posts
+//GetPosts retrieves all posts 
 func (c *Controller)GetPosts(ctx context.Context) ([]entity.Post,error){
 	 posts,err:=  c.repo.GetPosts(ctx)
 
 	 if err != nil{
 		return nil,fmt.Errorf("Controller failed to retrieve posts %w",err)
 	 }
-	 
 return posts,nil
 }
 

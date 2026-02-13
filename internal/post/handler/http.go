@@ -2,12 +2,15 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
 	"github.com/gorilla/mux"
 )
+
+//go:generate mockgen -source=http.go -destination=mocks/mock_postcontroller.go -package=mocks
 
 //PostController defines the business logic methods for posts
 type PostController interface{
@@ -42,7 +45,8 @@ func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
 	posts,err:=  h.ctrl.GetPosts(ctx)
 
 	if err != nil{
-		ResponseError(w,http.StatusInternalServerError,"Handler failed to retrieve posts",err)
+		errMsg := fmt.Sprintf("Handler failed to retrieve posts: %v",err)
+		ResponseError(w,http.StatusInternalServerError,errMsg)
 	  return
 	}
 
@@ -50,7 +54,7 @@ func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
 
 }
 
-//Create handles http request for creating posts
+//Create handles http request for creating a post
 func (h *HTTPHandler)Create(w http.ResponseWriter, r *http.Request){
    w.Write([]byte("ok"))
 }

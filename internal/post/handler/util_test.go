@@ -8,8 +8,9 @@ import (
 	"time"
 
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
-	"github.com/go-jose/go-jose/v4/testutils/require"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponseJSON(t *testing.T){
@@ -95,7 +96,20 @@ t.Run("Success response single post", func(t *testing.T) {
 }
 func TestResponseError(t *testing.T){
 	//arrange
-	//act
-	//assert
+	responseRecorder:= httptest.NewRecorder()
 	
+	
+
+	//act
+	ResponseError(responseRecorder,http.StatusNotFound,"failed to find post")
+  var resp map[string]string
+
+	err:= json.Unmarshal(responseRecorder.Body.Bytes(),&resp)
+	require.NoError(t,err,"should not fail to unmarshal test response")
+
+	//assert
+	assert.Equal(t,"application/json",responseRecorder.Result().Header.Get("Content-Type"))
+	assert.Equal(t,http.StatusNotFound,responseRecorder.Result().StatusCode)
+	assert.Equal(t,"failed to find post",resp["error"])
+
 }

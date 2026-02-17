@@ -6,22 +6,31 @@ import (
 	"os"
 
 	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/http"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/infrastructure/firebase"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/infrastructure/firestore"
 	postController "github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
 	postHandler "github.com/anthonymartz17/blog_platform_backend.git/internal/post/handler"
-	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/repository/firebase"
+	postRepository "github.com/anthonymartz17/blog_platform_backend.git/internal/post/repository/firestore"
 )
 
 //Run initializes dependencies and starts the server
 func New() (*httpServer.Server,error){
 
   ctx:= context.Background()
-	fireStoreClient,err:= firebase.NewFirestoreClient(ctx)
+	app,err:= firebase.New(ctx)
+
+	if err != nil{
+		return nil,err
+	}
+	fireStoreClient,err:= firestore.NewFirestoreClient(ctx,app)
 
 	if err != nil{
 		return nil,err
 	}
 
-	postRepo:= firebase.NewRepo(fireStoreClient)
+	
+
+	postRepo:= postRepository.NewRepo(fireStoreClient)
 	postCtrl:= postController.New(postRepo)	
 	postHandler:= postHandler.New(postCtrl)	
 	

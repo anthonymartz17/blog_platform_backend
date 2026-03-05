@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"context"
 	"net/http"
 	"strings"
 
@@ -9,18 +10,7 @@ import (
 )
 type contextKey string
 const uidKey contextKey = "uid"
-/*
-request to get tokenID:
 
-curl 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDCeeX14mp0QQD2m5TD_gpw5ZVpVGzMTgM' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "email":"anthonymartz17@gmail.com",
-    "password":"@bc12345",
-    "returnSecureToken":true
-  }'
-
-*/
 
 // learn about this middleware from gorilla
 func AuthMiddleware(verifier AuthVerifier) mux.MiddlewareFunc {
@@ -53,7 +43,38 @@ func AuthMiddleware(verifier AuthVerifier) mux.MiddlewareFunc {
 			// 5. If valid → put uid in contextuidKey
 			ctx:= context.WithValue(r.Context(),uidKey,authToken.UID)
 
+        header:= r.Header.Get("Authorization")
+				if !strings.HasPrefix(header, "Bearer ") {
+            http.Error(w, "invalid authorization header", http.StatusUnauthorized)
+            return
+          }
+
+				token:= strings.TrimPrefix(header,"Bearer ")
+         
+				// 2. Validate "Bearer <token>"
+        if token == "" {
+           http.Error(w,"missing bearer token",http.StatusUnauthorized)
+           return
+					}
+					
+					// 3. Verify token using authClient
+					authToken,err:= verifier.VerifyToken(r.Context(),token)
+					
+					// 4. If invalid → write 401 and return
+					if err != nil{
+					http.Error(w,"unauthorized",http.StatusUnauthorized)
+					return
+				}
+
+			// 5. If valid → put uid in contextuidKey
+			ctx:= context.WithValue(r.Context(),uidKey,authToken.UID)
+
 			// 6. Call next.ServeHTTP(w, r.WithContext(newCtx))
+       next.ServeHTTP(w,r.WithContext(ctx))
+		})
+	}
+}
+
        next.ServeHTTP(w,r.WithContext(ctx))
 		})
 	}

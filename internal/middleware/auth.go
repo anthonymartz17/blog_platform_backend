@@ -1,47 +1,60 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
+	"strings"
+
 	"github.com/gorilla/mux"
 )
+type contextKey string
+const uidKey contextKey = "uid"
+/*
+request to get tokenID:
+
+curl 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDCeeX14mp0QQD2m5TD_gpw5ZVpVGzMTgM' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email":"anthonymartz17@gmail.com",
+    "password":"@bc12345",
+    "returnSecureToken":true
+  }'
+
+*/
 
 // learn about this middleware from gorilla
 func AuthMiddleware(verifier AuthVerifier) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        
 			// 1. Extract Authorization header
-			// 2. Validate "Bearer <token>"
-			// 3. Verify token using authClient
-			// 4. If invalid → write 401 and return
-			// 5. If valid → put uid in context
+        header:= r.Header.Get("Authorization")
+				if !strings.HasPrefix(header, "Bearer ") {
+            http.Error(w, "invalid authorization header", http.StatusUnauthorized)
+            return
+          }
+
+				token:= strings.TrimPrefix(header,"Bearer ")
+         
+				// 2. Validate "Bearer <token>"
+        if token == "" {
+           http.Error(w,"missing bearer token",http.StatusUnauthorized)
+           return
+					}
+					
+					// 3. Verify token using authClient
+					authToken,err:= verifier.VerifyToken(r.Context(),token)
+					
+					// 4. If invalid → write 401 and return
+					if err != nil{
+					http.Error(w,"unauthorized",http.StatusUnauthorized)
+					return
+				}
+
+			// 5. If valid → put uid in contextuidKey
+			ctx:= context.WithValue(r.Context(),uidKey,authToken.UID)
+
 			// 6. Call next.ServeHTTP(w, r.WithContext(newCtx))
-       next.ServeHTTP(w,r)
+       next.ServeHTTP(w,r.WithContext(ctx))
 		})
 	}
 }
-// func AuthMiddleware(verifier *auth.Service) mux.MiddlewareFunc {
-// 	return func(next http.Handler) http.Handler {
-// 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-// 					// 1. Read Authorization header
-// 					header := r.Header.Get("Authorization")
-
-// 					// 2. Extract Bearer token
-// 					tokenString := extractToken(header)
-
-// 					// 3. Verify token
-// 					token, err := verifier.VerifyToken(r.Context(), tokenString)
-// 					if err != nil {
-// 							http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 							return
-// 					}
-
-// 					// 4. Store user ID in context
-// 					ctx := context.WithValue(r.Context(), "userID", token.UID)
-
-// 					// 5. Continue request
-// 					next.ServeHTTP(w, r.WithContext(ctx))
-// 			})
-// 	}
-// }

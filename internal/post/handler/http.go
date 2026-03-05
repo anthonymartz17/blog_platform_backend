@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/middleware"
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
+
 	"github.com/gorilla/mux"
 )
 
@@ -34,9 +37,14 @@ func New(ctrl PostController)*HTTPHandler{
 	return &HTTPHandler{ctrl:ctrl}
 }
 //RegisterRoutes register post routes
-func (h *HTTPHandler)RegisterRoutes(r *mux.Router){
-	r.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
-	 r.HandleFunc("/posts",h.Create).Methods(http.MethodPost)
+func (h *HTTPHandler)RegisterRoutes(r *mux.Router,authService *auth.Service){
+	r.HandleFunc("/posts",h.Create).Methods(http.MethodPost)
+
+	
+	protected:= r.PathPrefix("/").Subrouter()
+	protected.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
+	protected.Use(middleware.AuthMiddleware(authService))
+	protected.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
 
 }
 

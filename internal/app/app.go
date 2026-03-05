@@ -7,7 +7,7 @@ import (
 
 	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/http"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/infrastructure/firebase"
-	"github.com/anthonymartz17/blog_platform_backend.git/internal/infrastructure/firestore"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
 	postController "github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
 	postHandler "github.com/anthonymartz17/blog_platform_backend.git/internal/post/handler"
 	postRepository "github.com/anthonymartz17/blog_platform_backend.git/internal/post/repository/firestore"
@@ -17,27 +17,33 @@ import (
 func New() (*httpServer.Server,error){
 
   ctx:= context.Background()
+
 	app,err:= firebase.New(ctx)
-
 	if err != nil{
 		return nil,err
 	}
-	fireStoreClient,err:= firestore.NewFirestoreClient(ctx,app)
-
-	if err != nil{
-		return nil,err
-	}
-
 	
+	fireStoreClient,err:= app.Firestore(ctx)
+	if err != nil{
+		return nil,err
+	}
+
+	authClient,err:= app.Auth(ctx)
+	if err != nil{
+		return nil,err
+	}
+
+	authService:= auth.New(authClient)
 
 	postRepo:= postRepository.NewRepo(fireStoreClient)
 	postCtrl:= postController.New(postRepo)	
 	postHandler:= postHandler.New(postCtrl)	
 	
-
+	
 	
 	httpRouter:= httpServer.NewRouter()
-	postHandler.RegisterRoutes(httpRouter)
+  // httpRouter.Use(auth.Auth(authService))
+	postHandler.RegisterRoutes(httpRouter,authService)
   
 	port:= os.Getenv("PORT")
 	

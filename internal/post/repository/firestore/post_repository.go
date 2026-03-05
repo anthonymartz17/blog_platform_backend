@@ -15,7 +15,7 @@ type PostFirebase struct{
 client *firestore.Client
 }
 
-	//Ensures PostFirebase implements Repository interface
+	//Validates PostFirebase implements Repository interface
 	var _ controller.PostRepository = (*PostFirebase)(nil)
 
 //New creats a new PostFirebase

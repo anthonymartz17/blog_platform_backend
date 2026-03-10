@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
 )
 
-func NewFirestoreClient(ctx context.Context) (*firestore.Client,error) {
+
+
+func New(ctx context.Context) (*firebase.App,error) {
 
 	serviceAccountPath:= os.Getenv("FIREBASE_CREDENTIALS")
 
@@ -32,15 +33,6 @@ func NewFirestoreClient(ctx context.Context) (*firestore.Client,error) {
 	if err != nil {
 		return nil,fmt.Errorf("error initializing firebase app: %w", err)
 	}
-	
-	client, err := app.Firestore(ctx)
-	
-	if err != nil {
-		return nil,fmt.Errorf("error initializing firestore: %w", err)
-	}
 
-	return client,nil
+	return app,nil
 }
-
-
-

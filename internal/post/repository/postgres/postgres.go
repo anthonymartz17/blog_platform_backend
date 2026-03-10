@@ -1,6 +1,8 @@
 package post
 
-import "github.com/anthonymartz17/blog_platform_backend.git/internal/entity/post"
+import "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
+
+
 
 
 

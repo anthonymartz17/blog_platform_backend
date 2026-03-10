@@ -2,11 +2,18 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/middleware"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/middleware"
 	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
+
 	"github.com/gorilla/mux"
 )
 
@@ -32,9 +39,21 @@ func New(ctrl PostController)*HTTPHandler{
 	return &HTTPHandler{ctrl:ctrl}
 }
 //RegisterRoutes register post routes
-func (h *HTTPHandler)RegisterRoutes(r *mux.Router){
-	r.HandleFunc("/post",h.GetPosts).Methods(http.MethodGet)
-	 r.HandleFunc("/post",h.Create).Methods(http.MethodPost)
+func (h *HTTPHandler)RegisterRoutes(r *mux.Router,authService *auth.Service){
+	
+	r.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
+	
+	protected:= r.PathPrefix("/").Subrouter()
+	protected.Use(middleware.AuthMiddleware(authService))
+	
+	protected.HandleFunc("/posts",h.Create).Methods(http.MethodPost)
+
+
+	
+	protected:= r.PathPrefix("/").Subrouter()
+	protected.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
+	protected.Use(middleware.AuthMiddleware(authService))
+	protected.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
 
 }
 
@@ -56,5 +75,26 @@ func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
 
 //Create handles http request for creating a post
 func (h *HTTPHandler)Create(w http.ResponseWriter, r *http.Request){
-   w.Write([]byte("ok"))
+	var payload entity.Post
+	decoder:= json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err:= decoder.Decode(&payload); err != nil{
+		ResponseError(w,http.StatusBadRequest,err.Error())
+		return
+	}
+
+	payload.Content= strings.TrimSpace(payload.Content)
+	
+	if payload.Content == ""{
+		ResponseError(w,http.StatusBadRequest,"content can not be empty")
+		return
+	}
+
+	if payload.UserID == ""{
+		ResponseError(w,http.StatusBadRequest,"content can not be empty")
+		return
+	}
+
+	ResponseJSON(w,http.StatusOK,payload)
 }

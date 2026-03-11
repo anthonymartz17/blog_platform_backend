@@ -111,3 +111,48 @@ func TestGetPosts(t *testing.T){
 	}
 	
 }
+
+func TestValidatePayload(t *testing.T){
+
+	//arrange
+	tt:= []struct{
+		name string
+		payload *createPostRequest
+		wantErr bool
+		err error
+	}{
+		{
+			name:    "valid content",
+			payload: &createPostRequest{Content: " some content. "},
+			wantErr: false,
+			err:nil,
+		},
+		{
+			name:    "invalid content",
+			payload: &createPostRequest{Content: "   "},
+			wantErr: true,
+			err: ErrEmptyContent,
+		},
+	
+	}
+
+	for _,tc:= range tt{
+		t.Run(tc.name,func(t *testing.T) {
+		 //act
+		 got:= validatePayload(tc.payload)
+
+		 //assert
+		 if tc.wantErr{
+			 assert.ErrorIs(t,got,tc.err)
+		 }else{
+			 assert.NoError(t,got)
+		 }
+		})
+	}
+}
+// func TestDecodeReqBody(t *testing.T){
+
+// }
+// func TestCreate(t *testing.T){
+
+// }

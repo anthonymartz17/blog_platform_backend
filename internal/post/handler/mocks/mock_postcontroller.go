@@ -42,17 +42,17 @@ func (m *MockPostController) EXPECT() *MockPostControllerMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockPostController) Create(ctx context.Context, arg1 *post.Post) error {
+func (m *MockPostController) Create(ctx context.Context, userID, content string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, arg1)
+	ret := m.ctrl.Call(m, "Create", ctx, userID, content)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockPostControllerMockRecorder) Create(ctx, arg1 any) *gomock.Call {
+func (mr *MockPostControllerMockRecorder) Create(ctx, userID, content any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockPostController)(nil).Create), ctx, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockPostController)(nil).Create), ctx, userID, content)
 }
 
 // GetPosts mocks base method.

@@ -31,7 +31,10 @@ return posts,nil
 }
 
 //Create creates and saves a new post 
-func(c *Controller)Create(ctx context.Context,post *entity.Post)error{
- return c.repo.Save(ctx,post)
+func(c *Controller)Create(ctx context.Context,userID, content string)error{
+    
+	post:= entity.New(userID,content)
+  return c.repo.Save(ctx,post)
+  
 }
 

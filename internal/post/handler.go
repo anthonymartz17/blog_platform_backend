@@ -1,4 +1,4 @@
-package handler
+package post
 
 import (
 	"context"
@@ -12,8 +12,6 @@ import (
 
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/middleware"
-	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
-	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
 
 	"github.com/gorilla/mux"
 )
@@ -35,22 +33,22 @@ var (
 )
 
 type PostController interface{
-	GetPosts(ctx context.Context) ([]entity.Post,error)
+	GetPosts(ctx context.Context) ([]Post,error)
 	Create(ctx context.Context,userID,content string)error
 }
 
-//Ensure ctrl.Controller implements the PostController interface.
-var _ PostController = (*controller.Controller)(nil)
+//Ensure svc.Controller implements the PostController interface.
+var _ PostController = (*Service)(nil)
 
 
-//HTTPHandler wraps ctrl.PostController and handles post requests
-type HTTPHandler struct{
-  ctrl PostController
+//Handler wraps svc.PostController and handles post requests
+type Handler struct{
+  svc Service
 }
 
-//New creates a new HTTPHandler
-func New(ctrl PostController)*HTTPHandler{
-	return &HTTPHandler{ctrl:ctrl}
+//New creates a new Handler
+func NewHandler(svc Service)*Handler{
+	return &Handler{svc:svc}
 }
 // createPostRequest defines the JSON payload accepted by POST /posts.
 type createPostRequest struct {
@@ -59,7 +57,7 @@ type createPostRequest struct {
 
 
 //RegisterRoutes register post routes
-func (h *HTTPHandler)RegisterRoutes(r *mux.Router,authService *auth.Service){
+func (h *Handler)RegisterRoutes(r *mux.Router,authService *auth.Service){
 	
 	r.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
 	
@@ -74,10 +72,10 @@ func (h *HTTPHandler)RegisterRoutes(r *mux.Router,authService *auth.Service){
 }
 
 //GetPosts retrieves a list of  posts
-func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
+func (h *Handler)GetPosts(w http.ResponseWriter, r *http.Request){
 	ctx:= r.Context()
 
-	posts,err:=  h.ctrl.GetPosts(ctx)
+	posts,err:=  h.svc.GetPosts(ctx)
 
 	if err != nil{
 		errMsg := fmt.Sprintf("Handler failed to retrieve posts: %v",err)
@@ -90,7 +88,7 @@ func (h *HTTPHandler)GetPosts(w http.ResponseWriter, r *http.Request){
 }
 
 //Create handles http request for creating a post
-func (h *HTTPHandler)Create(w http.ResponseWriter, r *http.Request){
+func (h *Handler)Create(w http.ResponseWriter, r *http.Request){
 	payload,err:= decodeReqBody(r)
 
 	if err != nil{
@@ -115,7 +113,7 @@ func (h *HTTPHandler)Create(w http.ResponseWriter, r *http.Request){
 	
 
 
-	if err:= h.ctrl.Create(r.Context(),userID,payload.Content); err != nil{
+	if err:= h.svc.Create(r.Context(),userID,payload.Content); err != nil{
 
      if errors.Is(err,context.DeadlineExceeded){
 			 log.Printf("firebase timeout happened: %v",err)

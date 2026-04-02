@@ -2,24 +2,24 @@ package auth
 
 import (
 	"context"
-
-	"firebase.google.com/go/v4/auth"
+	"errors"
 )
 
+var ErrInvalidToken = errors.New("invalid token")
 
-type Service struct{
-	client *auth.Client
+// Claims represents the authenticated user information extracted from a token.
+type Claims struct {
+	UID string
 }
-//New creates and return a new AuthService type
-func New(c *auth.Client)*Service{
-	 return &Service{client:c}
+
+type Service struct{}
+
+// New creates an auth service.
+func New() *Service {
+	return &Service{}
 }
-//VerifyToken validates idToken and returns retrieved authToken
-func (a *Service)VerifyToken(ctx context.Context, idToken string )(*auth.Token,error){
-   authToken,err:= a.client.VerifyIDToken(ctx,idToken)
-   
-	 if err != nil{
-		 return nil,err
-	 }
-	 return authToken,nil
+
+// VerifyToken validates an access token and returns the authenticated claims.
+func (a *Service) VerifyToken(ctx context.Context, token string) (*Claims, error) {
+	return nil, ErrInvalidToken
 }

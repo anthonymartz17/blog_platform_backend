@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +18,7 @@ func TestResponseJSON(t *testing.T){
 t.Run("Success response list of posts", func(t *testing.T) {
 	//arrange
 	respRec:= httptest.NewRecorder() // simulates an http.NewResponseWriter
-	wantBody := []entity.Post{
+	wantBody := []Post{
 		{
 			ID:        "abc123",
 			UserID:    "user_1",
@@ -46,7 +44,7 @@ t.Run("Success response list of posts", func(t *testing.T) {
 	assert.Equal(t,"application/json",respRec.Result().Header.Get("Content-Type"),"should set header: Content-Type:application/json")
 	assert.Equal(t,http.StatusOK,respRec.Result().StatusCode,"should set status code 200")
 
-	var gotBody []entity.Post
+	var gotBody []Post
 
 	err:= json.Unmarshal(respRec.Body.Bytes(),&gotBody); 
 	require.NoError(t,err,"should not fail to unmarshal test body response")
@@ -61,7 +59,7 @@ t.Run("Success response list of posts", func(t *testing.T) {
 t.Run("Success response single post", func(t *testing.T) {
 	//arrange
 	respRec:= httptest.NewRecorder() // simulates an http.NewResponseWriter
-	wantBody:= &entity.Post{
+	wantBody:= &Post{
 			ID:        "abc123",
 			UserID:    "user_1",
 			Content:   "First test post",
@@ -77,7 +75,7 @@ t.Run("Success response single post", func(t *testing.T) {
 	assert.Equal(t,"application/json",respRec.Result().Header.Get("Content-Type"),"should set header: Content-Type:application/json")
 	assert.Equal(t,http.StatusOK,respRec.Result().StatusCode,"should set status code 200")
 
-	var gotBody entity.Post
+	var gotBody Post
 
 	err:= json.Unmarshal(respRec.Body.Bytes(),&gotBody); 
 	require.NoError(t,err,"should not fail to unmarshal test body response")

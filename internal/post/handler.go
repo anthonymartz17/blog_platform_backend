@@ -16,9 +16,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//go:generate mockgen -source=http.go -destination=mocks/mock_postcontroller.go -package=mocks
+//go:generate mockgen -source=handler.go -destination=mocks/mock_service.go -package=mocks
 
-//PostController defines the business logic methods for posts
+// PostService defines the business logic methods for posts.
 
 const (
 	msgInvalidBody  = "invalid request body"
@@ -32,22 +32,21 @@ var (
 	ErrUnauthorized = errors.New("unauthorized")
 )
 
-type PostController interface{
+type PostService interface{
 	GetPosts(ctx context.Context) ([]Post,error)
-	Create(ctx context.Context,userID,content string)error
+	Create(ctx context.Context,userID,content string)(*Post, error) 
 }
 
-//Ensure svc.Controller implements the PostController interface.
-var _ PostController = (*Service)(nil)
 
 
-//Handler wraps svc.PostController and handles post requests
+
+// Handler handles HTTP requests for posts.
 type Handler struct{
-  svc Service
+  svc PostService
 }
 
-//New creates a new Handler
-func NewHandler(svc Service)*Handler{
+// NewHandler creates a new Handler.
+func NewHandler(svc PostService)*Handler{
 	return &Handler{svc:svc}
 }
 // createPostRequest defines the JSON payload accepted by POST /posts.
@@ -56,7 +55,7 @@ type createPostRequest struct {
 }
 
 
-//RegisterRoutes register post routes
+// RegisterRoutes registers the post routes.
 func (h *Handler)RegisterRoutes(r *mux.Router,authService *auth.Service){
 	
 	r.HandleFunc("/posts",h.GetPosts).Methods(http.MethodGet)
@@ -71,7 +70,7 @@ func (h *Handler)RegisterRoutes(r *mux.Router,authService *auth.Service){
 
 }
 
-//GetPosts retrieves a list of  posts
+// GetPosts retrieves a list of posts.
 func (h *Handler)GetPosts(w http.ResponseWriter, r *http.Request){
 	ctx:= r.Context()
 
@@ -87,7 +86,7 @@ func (h *Handler)GetPosts(w http.ResponseWriter, r *http.Request){
 
 }
 
-//Create handles http request for creating a post
+// Create handles the HTTP request for creating a post.
 func (h *Handler)Create(w http.ResponseWriter, r *http.Request){
 	payload,err:= decodeReqBody(r)
 
@@ -111,12 +110,12 @@ func (h *Handler)Create(w http.ResponseWriter, r *http.Request){
 			 return
 	}
 	
+ newPost,err:= h.svc.Create(r.Context(),userID,payload.Content)
 
-
-	if err:= h.svc.Create(r.Context(),userID,payload.Content); err != nil{
+	if  err != nil{
 
      if errors.Is(err,context.DeadlineExceeded){
-			 log.Printf("firebase timeout happened: %v",err)
+			 log.Printf("database timeout happened: %v",err)
 			 ResponseError(w,http.StatusGatewayTimeout,msgInternal)
 			 return
 		 }
@@ -126,7 +125,7 @@ func (h *Handler)Create(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	ResponseJSON(w,http.StatusCreated,"Created")
+	ResponseJSON(w,http.StatusCreated,newPost)
 }
 
 

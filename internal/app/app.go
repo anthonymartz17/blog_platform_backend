@@ -5,56 +5,75 @@ import (
 	"errors"
 	"os"
 
-	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/http"
-	"github.com/anthonymartz17/blog_platform_backend.git/internal/infrastructure/firebase"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
-	postController "github.com/anthonymartz17/blog_platform_backend.git/internal/post/controller"
-	postHandler "github.com/anthonymartz17/blog_platform_backend.git/internal/post/handler"
-	postRepository "github.com/anthonymartz17/blog_platform_backend.git/internal/post/repository/firestore"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/database/postgres"
+	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/http"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/post"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	postRepository "github.com/anthonymartz17/blog_platform_backend.git/internal/store/postgres"
 )
 
-//Run initializes dependencies and starts the server
-func New() (*httpServer.Server,error){
+type App struct {
+	server   *httpServer.Server
+	connPool *pgxpool.Pool
+}
 
-  ctx:= context.Background()
+// New initializes the application dependencies and returns an App.
+func New() (*App, error) {
 
-	app,err:= firebase.New(ctx)
-	if err != nil{
-		return nil,err
-	}
-	
-	fireStoreClient,err:= app.Firestore(ctx)
-	if err != nil{
-		return nil,err
-	}
+	ctx := context.Background()
 
-	authClient,err:= app.Auth(ctx)
-	if err != nil{
-		return nil,err
+	authService := auth.New()
+
+	cfg, err := postgres.ConfigFromEnv()
+	if err != nil {
+		return nil, err
 	}
 
-	authService:= auth.New(authClient)
+	pool, err := postgres.NewPool(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
 
-	postRepo:= postRepository.NewRepo(fireStoreClient)
-	postCtrl:= postController.New(postRepo)	
-	postHandler:= postHandler.New(postCtrl)	
-	
-	
-	
-	httpRouter:= httpServer.NewRouter()
-  // httpRouter.Use(auth.Auth(authService))
-	postHandler.RegisterRoutes(httpRouter,authService)
-  
-	port:= os.Getenv("PORT")
-	
-  if port == ""{
+	postRepo := postRepository.NewPostStore(pool)
+	postSvc := post.NewPostService(postRepo)
+	postHandler := post.NewHandler(postSvc)
+
+	httpRouter := httpServer.NewRouter()
+	postHandler.RegisterRoutes(httpRouter, authService)
+
+	port := os.Getenv("PORT")
+
+	if port == "" {
 		return nil, errors.New("PORT environment variable not set")
 	}
 
-	svr:= httpServer.NewServer(port,httpRouter)
+	svr := httpServer.NewServer(port, httpRouter, func(context.Context) error {
+		pool.Close()
+		return nil
+	})
 
-	return svr,nil
-   
+	newApp := &App{
+		server:   svr,
+		connPool: pool,
+	}
+
+	return newApp, nil
+
 }
 
+// Start starts the application HTTP server.
+func (a *App) Start() error {
+	return a.server.Start()
+}
 
+// Shutdown gracefully stops the application.
+func (a *App) Shutdown(ctx context.Context) error {
+	return a.server.Shutdown(ctx)
+}
+
+// Address returns the HTTP server bind address.
+func (a *App) Address() string {
+	return a.server.Address()
+}

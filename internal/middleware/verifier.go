@@ -3,10 +3,10 @@ package middleware
 import (
 	"context"
 
-	"firebase.google.com/go/v4/auth"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
 )
 
-//AuthVerifier defines token validation method
-type AuthVerifier interface{
-	VerifyToken(ctx context.Context, idToken string )(*auth.Token,error)
+// AuthVerifier defines token validation method
+type AuthVerifier interface {
+	VerifyToken(ctx context.Context, token string) (*auth.Claims, error)
 }

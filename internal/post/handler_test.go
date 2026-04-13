@@ -1,4 +1,4 @@
-package handler
+package post_test
 
 import (
 	"encoding/json"
@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	entity "github.com/anthonymartz17/blog_platform_backend.git/internal/post"
-	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/handler/mocks"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/post"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/post/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -19,17 +19,17 @@ import (
 
 func TestGetPosts(t *testing.T){
 
-  tt:= []struct{
+	tt:= []struct{
 		name string
 		msg string
-		data []entity.Post
+		data []post.Post
 		wantErr error
 		expectsSrvCall bool
 	}{
 		{
 			name:"valid two item list",
 			msg:"should succeed on valid request",
-			data: []entity.Post{
+			data: []post.Post{
 				{
 					ID:        "1",
 					UserID:    "123",
@@ -49,14 +49,14 @@ func TestGetPosts(t *testing.T){
 		{
 			name:"empty list",
 			msg:"should succeed even if list is empty",
-			data: []entity.Post{},
+			data: []post.Post{},
 			wantErr:nil,
 			expectsSrvCall:true,
 		},
 		{
-			name:"PostController error",
-			msg:"should fail on PostController error",
-			data: []entity.Post{},
+			name:"PostService error",
+			msg:"should fail on PostService error",
+			data: []post.Post{},
 			wantErr:errors.New("failed to retrieve data from repository"),
 			expectsSrvCall:false,
 		},
@@ -72,7 +72,7 @@ func TestGetPosts(t *testing.T){
 			 ctrl := gomock.NewController(t)
 			 defer ctrl.Finish()
 		
-			 PostController:= mocks.NewMockPostController(ctrl)
+			 PostService:= mocks.NewMockPostService(ctrl)
    
        expectedData:= tc.data
        var expectedErr error
@@ -81,11 +81,11 @@ func TestGetPosts(t *testing.T){
 				 expectedData = nil
 				 expectedErr = tc.wantErr
 			 }
-				 PostController.EXPECT().GetPosts(gomock.Any()).Return(expectedData,expectedErr)
+				 PostService.EXPECT().GetPosts(gomock.Any()).Return(expectedData,expectedErr)
 
 
 
-			 handler:= New(PostController)
+			 handler:= post.NewHandler(PostService)
 
 			 //act
 		   handler.GetPosts(rr,req)
@@ -99,7 +99,7 @@ func TestGetPosts(t *testing.T){
 					 
 					}
 					
-					var data []entity.Post
+					var data []post.Post
 					 err:= json.Unmarshal(rr.Body.Bytes(),&data)
 					 require.NoError(t,err,"should not fail unmarshalling test response data")
 
@@ -111,3 +111,9 @@ func TestGetPosts(t *testing.T){
 	}
 	
 }
+// func TestDecodeReqBody(t *testing.T){
+
+// }
+// func TestCreate(t *testing.T){
+
+// }

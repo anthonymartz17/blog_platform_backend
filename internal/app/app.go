@@ -7,11 +7,12 @@ import (
 
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/auth"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/database/postgres"
-	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/http"
 	"github.com/anthonymartz17/blog_platform_backend.git/internal/post"
+	httpServer "github.com/anthonymartz17/blog_platform_backend.git/internal/transport/http"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	postRepository "github.com/anthonymartz17/blog_platform_backend.git/internal/store/postgres"
+	repository "github.com/anthonymartz17/blog_platform_backend.git/internal/repository/postgres"
+	"github.com/anthonymartz17/blog_platform_backend.git/internal/user"
 )
 
 type App struct {
@@ -24,7 +25,7 @@ func New() (*App, error) {
 
 	ctx := context.Background()
 
-	authService := auth.New()
+	tokenService := auth.NewTokenService()
 
 	cfg, err := postgres.ConfigFromEnv()
 	if err != nil {
@@ -36,12 +37,17 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	postRepo := postRepository.NewPostStore(pool)
+	httpRouter := httpServer.NewRouter()
+
+	userRepo := repository.NewUserStore(pool)
+	userSvc := user.NewService(userRepo, tokenService)
+	userHandler := user.NewHandler(userSvc)
+	userHandler.RegisterRoutes(httpRouter)
+
+	postRepo := repository.NewPostStore(pool)
 	postSvc := post.NewPostService(postRepo)
 	postHandler := post.NewHandler(postSvc)
-
-	httpRouter := httpServer.NewRouter()
-	postHandler.RegisterRoutes(httpRouter, authService)
+	postHandler.RegisterRoutes(httpRouter, tokenService)
 
 	port := os.Getenv("PORT")
 
